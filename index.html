@@ -1,0 +1,38 @@
+function consultar() {
+    var matricula = document.getElementById("matricula").value;
+    var url = "https://script.google.com/macros/s/AKfycbyQsJ-BY2-sZuAHb-MgbrJcVZdXq7vlfxDjnU9NQ-fFubRgOrpCP7ycYVQyN3VBQMESgw/exec?matricula=" + encodeURIComponent(matricula);
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log("Resposta da API:", data); // Verifica a estrutura da resposta
+            
+            var resultadoDiv = document.getElementById("resultado");
+            resultadoDiv.innerHTML = "";
+
+            if (!data || typeof data !== "object") {
+                resultadoDiv.innerHTML = "<p>Erro: resposta inesperada do servidor.</p>";
+                return;
+            }
+
+            // Se os dados estiverem dentro de uma chave específica, ajuste aqui
+            let justificativas = Array.isArray(data) ? data : data.justificativas || [];
+
+            if (justificativas.length > 0) {
+                justificativas.sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordenar por data mais recente
+                var tabela = "<table><tr><th>Matrícula</th><th>Data</th><th>Justificativa</th><th>Nome</th></tr>";
+                justificativas.forEach(just => {
+                    let dataFormatada = new Date(just.data).toLocaleDateString("pt-BR");
+                    tabela += `<tr><td>${just.matricula}</td><td>${dataFormatada}</td><td>${just.justificativa}</td><td>${just.nome}</td></tr>`;
+                });
+                tabela += "</table>";
+                resultadoDiv.innerHTML = tabela;
+            } else {
+                resultadoDiv.innerHTML = "<p>Nenhuma justificativa encontrada.</p>";
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao consultar:", error);
+            document.getElementById("resultado").innerHTML = "<p>Erro ao consultar os dados.</p>";
+        });
+}
