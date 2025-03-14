@@ -1,38 +1,141 @@
-function consultar() {
-    var matricula = document.getElementById("matricula").value;
-    var url = "https://script.google.com/macros/s/AKfycbyQsJ-BY2-sZuAHb-MgbrJcVZdXq7vlfxDjnU9NQ-fFubRgOrpCP7ycYVQyN3VBQMESgw/exec?matricula=" + encodeURIComponent(matricula);
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            console.log("Resposta da API:", data); // Verifica a estrutura da resposta
-            
-            var resultadoDiv = document.getElementById("resultado");
-            resultadoDiv.innerHTML = "";
-
-            if (!data || typeof data !== "object") {
-                resultadoDiv.innerHTML = "<p>Erro: resposta inesperada do servidor.</p>";
-                return;
-            }
-
-            // Se os dados estiverem dentro de uma chave específica, ajuste aqui
-            let justificativas = Array.isArray(data) ? data : data.justificativas || [];
-
-            if (justificativas.length > 0) {
-                justificativas.sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordenar por data mais recente
-                var tabela = "<table><tr><th>Matrícula</th><th>Data</th><th>Justificativa</th><th>Nome</th></tr>";
-                justificativas.forEach(just => {
-                    let dataFormatada = new Date(just.data).toLocaleDateString("pt-BR");
-                    tabela += `<tr><td>${just.matricula}</td><td>${dataFormatada}</td><td>${just.justificativa}</td><td>${just.nome}</td></tr>`;
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONSULTA DE JUSTIFICATIVA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .header img {
+            width: 60px;
+            height: auto;
+        }
+        h2 {
+            text-transform: uppercase;
+            color: #d32f2f;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        input {
+            width: 40%;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #b71c1c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #d32f2f;
+            color: white;
+        }
+        .contador {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d32f2f;
+            margin-top: 10px;
+        }
+        footer {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #d32f2f;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://static.wixstatic.com/media/cabdbb_1b659c41e9714c11b27150dbd40f191d~mv2.png/v1/fill/w_584,h_596,al_c,q_95,enc_avif,quality_auto/logo_png.png" alt="Logo">
+            <h2>CONSULTA DE JUSTIFICATIVA DE ABS</h2>
+        </div>
+        <input type="text" id="matricula" placeholder="Digite a matrícula">
+        <button onclick="consultar()">Consultar</button>
+        <button onclick="limpar()">Limpar</button>
+        <div id="contador" class="contador"></div>
+        <div id="resultado"></div>
+    </div>
+    <footer>
+        DESENVOLVIDO PELO PCP JAGUARIÚNA © 2025
+    </footer>
+    <script>
+        function consultar() {
+            var matricula = document.getElementById("matricula").value;
+            var url = "https://script.google.com/macros/s/AKfycbyQsJ-BY2-sZuAHb-MgbrJcVZdXq7vlfxDjnU9NQ-fFubRgOrpCP7ycYVQyN3VBQMESgw/exec?matricula=" + encodeURIComponent(matricula);
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    var resultadoDiv = document.getElementById("resultado");
+                    var contadorDiv = document.getElementById("contador");
+                    resultadoDiv.innerHTML = "";
+                    contadorDiv.innerHTML = "";
+                    if (data.length > 0) {
+                        data.sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordenar por data mais recente primeiro
+                        var tabela = "<table><tr><th>Matrícula</th><th>Data</th><th>Justificativa</th><th>Nome</th></tr>";
+                        data.forEach(just => {
+                            let dataFormatada = new Date(just.data).toLocaleDateString("pt-BR");
+                            tabela += `<tr><td>${just.matricula}</td><td>${dataFormatada}</td><td>${just.justificativa}</td><td>${just.nome}</td></tr>`;
+                        });
+                        tabela += "</table>";
+                        resultadoDiv.innerHTML = tabela;
+                        contadorDiv.innerHTML = `Total de justificativas: ${data.length}`;
+                    } else {
+                        resultadoDiv.innerHTML = "<p>Nenhuma justificativa encontrada.</p>";
+                        contadorDiv.innerHTML = "Total de justificativas: 0";
+                    }
+                })
+                .catch(error => {
+                    console.error("Erro ao consultar:", error);
+                    document.getElementById("resultado").innerHTML = "<p>Erro ao consultar os dados.</p>";
                 });
-                tabela += "</table>";
-                resultadoDiv.innerHTML = tabela;
-            } else {
-                resultadoDiv.innerHTML = "<p>Nenhuma justificativa encontrada.</p>";
-            }
-        })
-        .catch(error => {
-            console.error("Erro ao consultar:", error);
-            document.getElementById("resultado").innerHTML = "<p>Erro ao consultar os dados.</p>";
-        });
-}
+        }
+        function limpar() {
+            document.getElementById("matricula").value = "";
+            document.getElementById("resultado").innerHTML = "";
+            document.getElementById("contador").innerHTML = "";
+        }
+    </script>
+</body>
+</html>
